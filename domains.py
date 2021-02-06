@@ -21,7 +21,8 @@ def too_long_message():
 @click.option('--output', help='File to write json output', default=None)
 @click.option('--file', help='Input file', default=None)
 @click.option('--sep', help='Separator in input file', default='\n')
-def send(seq, raw, top, output, file, sep):
+@click.option('--smooth', help='Apply gaussian smoothing', is_flag=True)
+def send(seq, raw, top, output, file, sep, smooth):
     if seq and file:
         click.echo('Detected multiply sources, aborted')
         exit(-1)
@@ -44,7 +45,7 @@ def send(seq, raw, top, output, file, sep):
 
     req = json.dumps({
         'sequence': seq,
-        'smoothing': False
+        'smoothing': smooth
     })
     resp = requests.post(URL, req)
     resp = resp.json()
