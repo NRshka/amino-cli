@@ -41,9 +41,13 @@ def send(seq, raw, top, output, file, sep):
                     too_long_message()
 
             seq = str(seq)
-    seq = '\0' + seq + '\0'
 
-    resp = requests.post(URL, seq).json()
+    req = json.dumps({
+        'sequence': seq,
+        'smoothing': False
+    })
+    resp = requests.post(URL, req)
+    resp = resp.json()
 
     if raw:
         click.echo(resp)
