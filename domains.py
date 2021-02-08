@@ -41,7 +41,7 @@ def send(seq, raw, top, output, file, sep, smooth):
                 if len(x) > MAX_LENGTH:
                     too_long_message()
 
-            seq = str(seq)
+            seq = ','.join(seq)
 
     req = json.dumps({
         'sequence': seq,
@@ -49,6 +49,12 @@ def send(seq, raw, top, output, file, sep, smooth):
     })
     resp = requests.post(URL, req)
     resp = resp.json()
+    resp = [resp] if not isinstance(resp, list) else resp
+    orig = []
+
+    for item in resp:
+        orig.append(item["not_smoothed"])
+    resp = orig
 
     if raw:
         click.echo(resp)
