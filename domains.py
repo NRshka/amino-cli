@@ -52,7 +52,7 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
                 for x in seq:
                     if len(x) > 1200:
                         too_long_message()
-        seq = str(seq)
+        seq = ','.join(seq)
         
     req = json.dumps({
         'sequence': seq,
