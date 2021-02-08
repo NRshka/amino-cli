@@ -1,6 +1,7 @@
 import requests
 import click
 import json
+from functools import reduce
 
 
 URL = 'http://217.79.62.70:8080/domains'
@@ -22,7 +23,8 @@ def too_long_message():
 @click.option('--file', help='Input file', default=None)
 @click.option('--sep', help='Separator in input file', default='\n')
 @click.option('--smooth', help='Apply gaussian smoothing', is_flag=True)
-def send(seq, raw, top, output, file, sep, smooth):
+@click.option('--fasta', help='Deal with input file in fasta format', is_flag=True)
+def send(seq, raw, top, output, file, sep, smooth, fasta):
     if seq and file:
         click.echo('Detected multiply sources, aborted')
         exit(-1)
@@ -34,15 +36,24 @@ def send(seq, raw, top, output, file, sep, smooth):
 
     if file:
         with open(file, 'r') as fd:
-            seq = fd.read().split(sep)
-            seq = list(filter(lambda x: len(x), seq))  # filter empty seqs
-
-            for x in seq:
-                if len(x) > MAX_LENGTH:
-                    too_long_message()
-
-            seq = ','.join(seq)
-
+            if fasta:
+                seq = fd.read().split(">")
+                seq = seq[1:]
+                for i in range(len(seq)):
+                    seq[i] = seq[i].split(sep)
+                    seq[i] = list(filter(len, seq[i])) # filter empty seqs
+                    seq[i] = reduce(lambda y, z: y + z, seq[i][1:])
+                    if len(seq[i]) > 1200:
+                        too_long_message()
+                
+            else:
+                seq = fd.read().split(sep)
+                seq = list(filter(lambda x: len(x), seq)) # filter empty seqs
+                for x in seq:
+                    if len(x) > 1200:
+                        too_long_message()
+        seq = str(seq)
+        
     req = json.dumps({
         'sequence': seq,
         'smoothing': smooth
