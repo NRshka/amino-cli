@@ -45,7 +45,7 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
                     seq[i] = reduce(lambda y, z: y + z, seq[i][1:])
                     if len(seq[i]) > 1200:
                         too_long_message()
-                
+ 
             else:
                 seq = fd.read().split(sep)
                 seq = list(filter(lambda x: len(x), seq)) # filter empty seqs
@@ -53,7 +53,7 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
                     if len(x) > 1200:
                         too_long_message()
         seq = ','.join(seq)
-        
+
     req = json.dumps({
         'sequence': seq,
         'smoothing': smooth
@@ -64,7 +64,7 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
     orig = []
 
     for item in resp:
-        orig.append(item["not_smoothed"])
+        orig.append(item[smooth])
     resp = orig
 
     if raw:
