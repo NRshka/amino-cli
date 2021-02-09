@@ -64,7 +64,8 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
     orig = []
 
     for item in resp:
-        orig.append(item[smooth])
+        key = "smoothed" if smooth else "not_smoothed"
+        orig.append(item[key])
     resp = orig
 
     if raw:
