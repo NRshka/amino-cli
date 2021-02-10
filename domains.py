@@ -10,9 +10,8 @@ MAX_LENGTH = 1200
 
 
 def too_long_message():
-    click.echo(f'Too long sequence, max length {MAX_LENGTH}')
-    click.echo('Aborted')
-    exit(-1)
+    click.echo(f'[WARNING] Too long sequence, max length {MAX_LENGTH}')
+
 
 @click.command()
 @click.option('--seq', help='Amino acid sequence to scan', default=None)
