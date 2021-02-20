@@ -2,11 +2,15 @@ import requests
 import click
 import json
 from functools import reduce
+import base64
 
 
 URL = 'http://217.79.62.70:8080/domains'
 ONLY_ENGLISH = '^[a-zA-Z]$'
 MAX_LENGTH = 1200
+_EMBEDDING_HELP_ = 'Return embeddings and save it to a file with the same \
+name as the output file. Unable to save if output flas set as False'
+
 
 
 def too_long_message():
@@ -23,7 +27,8 @@ def too_long_message():
 @click.option('--sep', help='Separator in input file', default='\n')
 @click.option('--smooth', help='Apply gaussian smoothing', is_flag=True)
 @click.option('--fasta', help='Deal with input file in fasta format', is_flag=True)
-def send(seq, raw, top, output, file, sep, smooth, fasta):
+@click.option('--embedding', help=_EMBEDDING_HELP_, is_flag=True)
+def send(seq, raw, top, output, file, sep, smooth, fasta, embedding):
     if seq and file:
         click.echo('Detected multiply sources, aborted')
         exit(-1)
@@ -40,31 +45,39 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
                 seq = seq[1:]
                 for i in range(len(seq)):
                     seq[i] = seq[i].split(sep)
-                    seq[i] = list(filter(len, seq[i])) # filter empty seqs
+                    seq[i] = list(filter(len, seq[i]))  # filter empty seqs
                     seq[i] = reduce(lambda y, z: y + z, seq[i][1:])
                     if len(seq[i]) > 1200:
                         too_long_message()
- 
+
             else:
                 seq = fd.read().split(sep)
-                seq = list(filter(lambda x: len(x), seq)) # filter empty seqs
+                seq = list(filter(lambda x: len(x), seq))  # filter empty seqs
                 for x in seq:
                     if len(x) > 1200:
                         too_long_message()
         seq = ','.join(seq)
 
+    import pdb
+    pdb.set_trace()
     req = json.dumps({
         'sequence': seq,
-        'smoothing': smooth
+        'smoothing': smooth,
+        'embedding': embedding
     })
     resp = requests.post(URL, req)
     resp = resp.json()
     resp = [resp] if not isinstance(resp, list) else resp
     orig = []
+    embeddings = []
 
     for item in resp:
         key = "smoothed" if smooth else "not_smoothed"
         orig.append(item[key])
+        if embedding:
+            embeddings.append(
+                item["embedding_{}".format(key)]
+            )
     resp = orig
 
     if raw:
@@ -80,6 +93,16 @@ def send(seq, raw, top, output, file, sep, smooth, fasta):
                 json.dump(resp, file, indent=4)
         except Exception as err:
             click.echo(f"Can't write to file {output} because of {err}")
+        if embedding:
+            for ind, emb in enumerate(embeddings):
+                try:
+                    emb_bytes = base64.b64decode(emb.encode('utf-8'))
+                    filename = output.split('.')[-2]
+                    filename = f"{filename}_{ind}.npy"
+                    with open(filename, "wb") as file:
+                        file.write(emb_bytes)
+                except Exception as err:
+                    click.echo(f"Can't save embedding #{ind} to {filename}: {err}")
 
     if not (raw or top or output):
         click.echo(resp)
