@@ -58,8 +58,6 @@ def send(seq, raw, top, output, file, sep, smooth, fasta, embedding):
                         too_long_message()
         seq = ','.join(seq)
 
-    import pdb
-    pdb.set_trace()
     req = json.dumps({
         'sequence': seq,
         'smoothing': smooth,
