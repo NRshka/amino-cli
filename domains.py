@@ -4,13 +4,14 @@ import json
 from functools import reduce
 import base64
 
+from utils import get_fp
 
-URL = 'http://217.79.62.70:8080/domains'
+
+URL = 'http://217.79.62.70:8243/domains'
 ONLY_ENGLISH = '^[a-zA-Z]$'
 MAX_LENGTH = 1200
 _EMBEDDING_HELP_ = 'Return embeddings and save it to a file with the same \
 name as the output file. Unable to save if output flas set as False'
-
 
 
 def too_long_message():
@@ -56,16 +57,28 @@ def send(seq, raw, top, output, file, sep, smooth, fasta, embedding):
                 for x in seq:
                     if len(x) > 1200:
                         too_long_message()
-        seq = ','.join(seq)
+        # seq = ','.join(seq)
+
+    # getting fingerprint of client
+    fp = get_fp()
 
     req = json.dumps({
         'sequence': seq,
         'smoothing': smooth,
-        'embedding': embedding
+        'embedding': embedding,
+        'fingerprint': fp,
+        'useragent': 'cli'
     })
     resp = requests.post(URL, req)
-    resp = resp.json()
-    resp = [resp] if not isinstance(resp, list) else resp
+
+    resp_container = []
+    for text in resp.iter_lines():
+        text = text.decode('utf-8')
+        text = text.replace('\n', '')
+        resp_container.append(json.loads(text))
+
+    #resp = [resp] if not isinstance(resp, list) else resp
+    resp = resp_container
     orig = []
     embeddings = []
 
